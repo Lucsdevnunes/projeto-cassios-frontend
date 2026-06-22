@@ -1,0 +1,599 @@
+'use client';
+
+import React, { useEffect, useState } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import { ApiClient } from '../../../lib/api';
+import { useAuth } from '../../../context/AuthContext';
+import { 
+  ThermometerSnowflake, 
+  Info, 
+  MapPin, 
+  Calendar, 
+  Wrench, 
+  CheckCircle,
+  FileDown, 
+  Camera, 
+  UserCheck,
+  Phone,
+  MessageSquare
+} from 'lucide-react';
+import jsPDF from 'jspdf';
+
+interface MaintenanceEvent {
+  id: string;
+  dataManutencao: string;
+  servicoRealizado: string;
+  descricao: string;
+  pecaTrocada?: string;
+  quantidade: number;
+  tecnicoNome: string;
+  tecnicoAssinatura: string;
+  contratanteNome: string;
+  contratanteAssinatura: string;
+  observacoes?: string;
+  fotos: { id: string; tipo: 'ANTES' | 'DEPOIS'; arquivo: string }[];
+}
+
+interface EquipmentPublic {
+  id: string;
+  codigoInterno: string;
+  qrCode: string;
+  endereco: string;
+  localInstalacao: string;
+  marca: string;
+  modelo: string;
+  numeroSerie: string;
+  btu: number;
+  tipo: string;
+  dataInstalacao: string;
+  observacoes?: string;
+  criadoEm: string;
+  manutencoes: MaintenanceEvent[];
+  clienteId?: string | null;
+  cliente?: { nome: string };
+}
+
+export default function PublicEquipmentTimeline() {
+  const { uuid } = useParams();
+  const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
+  
+  const [eq, setEq] = useState<EquipmentPublic | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [generatingPdf, setGeneratingPdf] = useState(false);
+
+  useEffect(() => {
+    if (uuid) {
+      fetchPublicDetails();
+    }
+  }, [uuid]);
+
+
+  const fetchPublicDetails = async () => {
+    try {
+      setLoading(true);
+      const data = await ApiClient.get(`/equipments/public/${uuid}`);
+      setEq(data);
+    } catch (err: any) {
+      setError(err.message || 'Equipamento não localizado no sistema ou ID inválido.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Advanced client-side PDF history report generator
+  const downloadHistoryPdf = async () => {
+    if (!eq) return;
+    setGeneratingPdf(true);
+
+    try {
+      const doc = new jsPDF('p', 'mm', 'a4');
+      let yOffset = 15;
+
+      // Helper function to draw header on every page
+      const drawHeader = (pageNumber: number) => {
+        doc.setFillColor(15, 23, 42); // slate-900 background
+        doc.rect(10, 10, 190, 18, 'F');
+        
+        doc.setTextColor(255, 255, 255);
+        doc.setFont('Helvetica', 'bold');
+        doc.setFontSize(14);
+        doc.text('CASSIOS CLIMA - RELATÓRIO DE MANUTENÇÃO', 15, 20);
+        
+        doc.setFont('Helvetica', 'normal');
+        doc.setFontSize(8);
+        doc.text(`CÓDIGO INTERNO: ${eq.codigoInterno}  |  EMISSÃO: ${new Date().toLocaleDateString('pt-BR')}`, 15, 25);
+        
+        // Page index
+        doc.text(`Página ${pageNumber}`, 190, 20, { align: 'right' });
+      };
+
+      // Helper to check and add new page
+      const checkPageBreak = (neededHeight: number, pageNum: { current: number }) => {
+        if (yOffset + neededHeight > 280) {
+          doc.addPage();
+          pageNum.current += 1;
+          drawHeader(pageNum.current);
+          yOffset = 40; // reset yOffset below header
+          return true;
+        }
+        return false;
+      };
+
+      const pageNum = { current: 1 };
+      drawHeader(pageNum.current);
+      yOffset = 40;
+
+      // Part 1: Equipment metadata & QR Code
+      doc.setFontSize(11);
+      doc.setFont('Helvetica', 'bold');
+      doc.setTextColor(15, 23, 42);
+      doc.text('1. DADOS TÉCNICOS DO AR-CONDICIONADO', 12, yOffset);
+      yOffset += 6;
+
+      doc.setDrawColor(203, 213, 225);
+      doc.setLineWidth(0.2);
+      doc.line(10, yOffset - 1, 200, yOffset - 1);
+
+      // Metadata Table fields
+      doc.setFont('Helvetica', 'normal');
+      doc.setFontSize(9);
+      
+      const fields = [
+        ['Código Interno:', eq.codigoInterno, 'Marca:', eq.marca],
+        ['Modelo:', eq.modelo, 'N/ Série:', eq.numeroSerie],
+        ['Capacidade:', `${eq.btu.toLocaleString()} BTUs`, 'Tipo:', eq.tipo],
+        ['Instalação:', new Date(eq.dataInstalacao).toLocaleDateString('pt-BR'), 'Estabelecimento:', eq.cliente?.nome || 'Não informado'],
+      ];
+
+      fields.forEach((row) => {
+        doc.setFont('Helvetica', 'bold');
+        doc.text(row[0], 15, yOffset);
+        doc.setFont('Helvetica', 'normal');
+        doc.text(row[1], 45, yOffset);
+
+        doc.setFont('Helvetica', 'bold');
+        doc.text(row[2], 110, yOffset);
+        doc.setFont('Helvetica', 'normal');
+        doc.text(row[3], 130, yOffset);
+        
+        yOffset += 6;
+      });
+
+      // Address specs
+      doc.setFont('Helvetica', 'bold');
+      doc.text('Endereço / Setor:', 15, yOffset);
+      doc.setFont('Helvetica', 'normal');
+      doc.text(`${eq.localInstalacao} - ${eq.endereco}`, 45, yOffset);
+      yOffset += 8;
+
+      // Embed QR Code tag image
+      try {
+        doc.addImage(eq.qrCode, 'PNG', 150, 35, 45, 45);
+      } catch (err) {
+        console.error('Failed to embed QR code in PDF', err);
+      }
+
+      yOffset = Math.max(yOffset, 85);
+
+      // Part 2: Maintenance Timeline
+      doc.setFontSize(11);
+      doc.setFont('Helvetica', 'bold');
+      doc.text('2. HISTÓRICO COMPLETO DE MANUTENÇÕES', 12, yOffset);
+      yOffset += 6;
+      doc.line(10, yOffset - 1, 200, yOffset - 1);
+
+      if (eq.manutencoes.length === 0) {
+        doc.setFont('Helvetica', 'italic');
+        doc.setFontSize(9);
+        doc.setTextColor(100, 116, 139);
+        doc.text('Nenhuma manutenção registrada para este aparelho.', 15, yOffset);
+      } else {
+        for (const [index, m] of eq.manutencoes.entries()) {
+          checkPageBreak(50, pageNum);
+
+          doc.setFillColor(248, 250, 252);
+          doc.rect(10, yOffset, 190, 8, 'F');
+          
+          doc.setFont('Helvetica', 'bold');
+          doc.setFontSize(9);
+          doc.setTextColor(30, 41, 59);
+          doc.text(`${index + 1}. SERVIÇO: ${m.servicoRealizado.toUpperCase()}`, 13, yOffset + 5.5);
+          doc.text(`DATA: ${new Date(m.dataManutencao).toLocaleDateString('pt-BR')}`, 197, yOffset + 5.5, { align: 'right' });
+          yOffset += 12;
+
+          // Description block
+          doc.setFont('Helvetica', 'normal');
+          doc.setTextColor(71, 85, 105);
+          const splitDescription = doc.splitTextToSize(`Descrição: ${m.descricao}`, 180);
+          doc.text(splitDescription, 15, yOffset);
+          yOffset += (splitDescription.length * 4.5) + 3;
+
+          // Spare parts details
+          if (m.pecaTrocada) {
+            checkPageBreak(8, pageNum);
+            doc.setFont('Helvetica', 'bold');
+            doc.text('Peças Trocadas: ', 15, yOffset);
+            doc.setFont('Helvetica', 'normal');
+            doc.text(`${m.pecaTrocada} (${m.quantidade} unidades)`, 42, yOffset);
+            yOffset += 6;
+          }
+
+          // Signatures block check
+          checkPageBreak(25, pageNum);
+          doc.setFont('Helvetica', 'bold');
+          doc.text(`Técnico Responsável: ${m.tecnicoNome}`, 15, yOffset);
+          doc.text(`Contratante / Autorizante: ${m.contratanteNome}`, 110, yOffset);
+          yOffset += 4;
+
+          // Embed signature images
+          try {
+            if (m.tecnicoAssinatura) {
+              doc.addImage(m.tecnicoAssinatura, 'PNG', 15, yOffset, 40, 14);
+            }
+            if (m.contratanteAssinatura) {
+              doc.addImage(m.contratanteAssinatura, 'PNG', 110, yOffset, 40, 14);
+            }
+          } catch (err) {
+            console.error('Failed to embed signature image in PDF', err);
+          }
+          yOffset += 18;
+
+          // Photos section check (if photos exist)
+          const photosBeforeList = m.fotos.filter((f) => f.tipo === 'ANTES');
+          const photosAfterList = m.fotos.filter((f) => f.tipo === 'DEPOIS');
+          const hasPhotos = photosBeforeList.length > 0 || photosAfterList.length > 0;
+
+          if (hasPhotos) {
+            checkPageBreak(50, pageNum);
+            doc.setFont('Helvetica', 'bold');
+            doc.text('Evidências Fotográficas:', 15, yOffset);
+            yOffset += 4;
+
+            let xPos = 15;
+            // Add up to 3 before photos
+            for (const [pIdx, p] of photosBeforeList.slice(0, 3).entries()) {
+              try {
+                doc.addImage(p.arquivo, 'JPEG', xPos, yOffset, 25, 25);
+                doc.setFontSize(6);
+                doc.setFont('Helvetica', 'normal');
+                doc.text(`Antes #${pIdx + 1}`, xPos + 12.5, yOffset + 28, { align: 'center' });
+                xPos += 30;
+              } catch (err) {
+                console.error('Error drawing photo', err);
+              }
+            }
+
+            xPos = 110;
+            // Add up to 3 after photos
+            for (const [pIdx, p] of photosAfterList.slice(0, 3).entries()) {
+              try {
+                doc.addImage(p.arquivo, 'JPEG', xPos, yOffset, 25, 25);
+                doc.setFontSize(6);
+                doc.setFont('Helvetica', 'normal');
+                doc.text(`Depois #${pIdx + 1}`, xPos + 12.5, yOffset + 28, { align: 'center' });
+                xPos += 30;
+              } catch (err) {
+                console.error('Error drawing photo', err);
+              }
+            }
+            yOffset += 34;
+          }
+
+          yOffset += 5; // spacing between timeline events
+        }
+      }
+
+      // Save PDF output
+      doc.save(`historico-ar-${eq.codigoInterno}.pdf`);
+    } catch (err) {
+      console.error('Failed to generate history PDF', err);
+      alert('Não foi possível gerar o PDF. Verifique a resolução das imagens de assinatura ou fotos.');
+    } finally {
+      setGeneratingPdf(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-950 text-slate-100">
+        <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+        <p className="mt-4 text-slate-400 font-medium text-sm">Escaneando equipamento...</p>
+      </div>
+    );
+  }
+
+  if (error || !eq) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-950 px-6">
+        <div className="w-full max-w-md bg-slate-900 border border-slate-800 p-8 rounded-3xl text-center">
+          <div className="bg-rose-500/10 p-3.5 rounded-2xl text-rose-400 border border-rose-500/20 shadow-inner inline-block mb-4">
+            <ThermometerSnowflake size={36} />
+          </div>
+          <h2 className="text-xl font-bold text-white">Não Encontrado</h2>
+          <p className="text-slate-400 text-xs mt-2 leading-relaxed">
+            {error || 'Não conseguimos localizar o cadastro deste equipamento de ar-condicionado.'}
+          </p>
+          <a
+            href="/"
+            className="w-full mt-6 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-semibold block transition-colors"
+          >
+            Voltar para a Página Principal
+          </a>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-slate-950 text-slate-100 relative overflow-hidden flex flex-col justify-between">
+      {/* Background decorations */}
+      <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-blue-600/5 rounded-full blur-[120px] -z-10 pointer-events-none"></div>
+      <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-teal-500/5 rounded-full blur-[100px] -z-10 pointer-events-none"></div>
+
+      {/* Header bar */}
+      <header className="bg-slate-900/60 border-b border-slate-900/80 backdrop-blur-md sticky top-0 z-20 shrink-0">
+        <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="bg-blue-600/20 p-2 rounded-xl text-blue-400">
+              <ThermometerSnowflake size={22} />
+            </div>
+            <div>
+              <span className="text-[10px] text-slate-500 font-bold block leading-none">CONSULTA PÚBLICA</span>
+              <h1 className="font-extrabold text-white text-base leading-tight mt-0.5">{eq.codigoInterno}</h1>
+            </div>
+          </div>
+          
+          <button
+            onClick={downloadHistoryPdf}
+            disabled={generatingPdf}
+            className="flex items-center gap-2 py-2 px-4 bg-blue-600 hover:bg-blue-500 disabled:bg-blue-600/50 text-white rounded-xl text-xs font-semibold transition-all shadow-md shadow-blue-600/10 cursor-pointer"
+          >
+            {generatingPdf ? (
+              <>
+                <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                Gerando...
+              </>
+            ) : (
+              <>
+                <FileDown size={14} />
+                Baixar Laudo PDF
+              </>
+            )}
+          </button>
+        </div>
+      </header>
+
+      {/* Page Body */}
+      <main className="max-w-3xl mx-auto w-full px-6 py-8 flex-1 space-y-8">
+        
+        {/* Co-Branding Contact Banner */}
+        <section className="bg-slate-900/60 border border-slate-800/80 p-6 rounded-2xl backdrop-blur-md flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="flex items-center gap-5">
+            <div className="bg-slate-950/80 p-3 rounded-2xl border border-slate-800/60 flex items-center justify-center shrink-0 w-32 h-16 relative overflow-hidden">
+              <img 
+                src="/logo-emporio.png" 
+                alt="Empório do Ar" 
+                className="w-full h-full object-contain"
+              />
+            </div>
+            <div>
+              <h2 className="font-extrabold text-white text-base">Empório do Ar Refrigeração</h2>
+              <p className="text-slate-400 text-xs mt-1">Assistência técnica autorizada e especializada em ar-condicionado.</p>
+            </div>
+          </div>
+          
+          <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+            <a 
+              href="tel:+556436511155" 
+              className="flex items-center justify-center gap-2 px-5 py-3 bg-slate-950 hover:bg-slate-850 border border-slate-800 text-slate-200 hover:text-white rounded-xl text-xs font-bold transition-all"
+            >
+              <Phone size={14} className="text-blue-400" />
+              (64) 3651-1155
+            </a>
+            <a 
+              href="https://wa.me/5564984569784" 
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center justify-center gap-2 px-5 py-3 bg-emerald-600/10 hover:bg-emerald-600/20 border border-emerald-500/20 text-emerald-400 hover:text-emerald-300 rounded-xl text-xs font-bold transition-all"
+            >
+              <MessageSquare size={14} className="text-emerald-400" />
+              (64) 98456-9784
+            </a>
+          </div>
+        </section>
+
+        {/* Section 1: Specifications Card */}
+        <section className="bg-slate-900/40 border border-slate-800/80 p-6 rounded-2xl backdrop-blur-md space-y-6">
+          <div className="flex items-center gap-2.5 pb-4 border-b border-slate-800/60">
+            <Info className="text-blue-400" size={20} />
+            <h2 className="font-extrabold text-white text-base">Ficha Técnica do Equipamento</h2>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 text-xs">
+            <div>
+              <span className="text-slate-500 block">Marca</span>
+              <p className="font-bold text-slate-200 mt-0.5">{eq.marca}</p>
+            </div>
+            <div>
+              <span className="text-slate-500 block">Modelo</span>
+              <p className="font-bold text-slate-200 mt-0.5">{eq.modelo}</p>
+            </div>
+            <div>
+              <span className="text-slate-500 block">N/ Série</span>
+              <p className="font-bold text-slate-200 mt-0.5">{eq.numeroSerie}</p>
+            </div>
+            <div>
+              <span className="text-slate-500 block">Capacidade</span>
+              <p className="font-bold text-slate-200 mt-0.5">{eq.btu.toLocaleString()} BTUs</p>
+            </div>
+            <div>
+              <span className="text-slate-500 block">Tipo</span>
+              <p className="font-bold text-slate-200 mt-0.5">{eq.tipo}</p>
+            </div>
+            <div>
+              <span className="text-slate-500 block">Data de Instalação</span>
+              <p className="font-bold text-slate-200 mt-0.5">
+                {new Date(eq.dataInstalacao).toLocaleDateString('pt-BR')}
+              </p>
+            </div>
+            <div>
+              <span className="text-slate-500 block">Estabelecimento</span>
+              <p className="font-bold text-blue-400 mt-0.5">{eq.cliente?.nome || 'Sem Estabelecimento'}</p>
+            </div>
+            <div className="col-span-2">
+              <span className="text-slate-500 block">Identificador Único</span>
+              <p className="font-mono text-slate-400 text-[10px] break-all mt-0.5">{eq.id}</p>
+            </div>
+          </div>
+
+          <div className="pt-4 border-t border-slate-800/60 flex items-start gap-2.5 text-xs text-slate-400">
+            <MapPin size={16} className="text-slate-500 shrink-0 mt-0.5" />
+            <div>
+              <span className="text-slate-500 text-[10px] block font-semibold">LOCAL DE INSTALAÇÃO</span>
+              <p className="font-semibold text-slate-300 mt-0.5 leading-tight">
+                {eq.localInstalacao} - {eq.endereco}
+              </p>
+            </div>
+          </div>
+
+          {eq.observacoes && (
+            <div className="bg-slate-950/40 p-4 rounded-xl border border-slate-800/40 text-xs">
+              <span className="text-slate-500 text-[10px] block font-semibold">OBSERVAÇÕES DE CADASTRO</span>
+              <p className="text-slate-400 italic leading-relaxed mt-1">
+                "{eq.observacoes}"
+              </p>
+            </div>
+          )}
+        </section>
+
+        {/* Section 2: Timeline Section */}
+        <section className="space-y-6">
+          <div className="flex items-center gap-2.5">
+            <Wrench className="text-emerald-400" size={20} />
+            <h2 className="font-extrabold text-white text-base">Linha do Tempo de Manutenções</h2>
+          </div>
+
+          {eq.manutencoes.length === 0 ? (
+            <div className="bg-slate-900/20 border border-slate-900 border-dashed p-8 rounded-2xl text-center text-slate-500 text-sm italic">
+              Nenhuma intervenção técnica registrada.
+            </div>
+          ) : (
+            <div className="pl-4 relative before:absolute before:left-[9px] before:top-3 before:bottom-3 before:w-[1px] before:bg-slate-800 space-y-8">
+              {eq.manutencoes.map((m) => (
+                <div key={m.id} className="relative pl-8 space-y-4">
+                  {/* Timeline point */}
+                  <div className="absolute -left-[19px] top-1.5 w-4 h-4 rounded-full bg-slate-950 border border-emerald-500 flex items-center justify-center shadow-lg">
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-400"></div>
+                  </div>
+
+                  {/* Header card */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-900/60 pb-2">
+                    <div className="flex items-center gap-2.5">
+                      <span className="text-sm font-black text-slate-200 tracking-wide">{m.servicoRealizado}</span>
+                      <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[9px] font-bold px-2 py-0.5 rounded-full">
+                        VERIFICADO
+                      </span>
+                    </div>
+                    <span className="text-slate-500 text-xs font-semibold flex items-center gap-1">
+                      <Calendar size={12} />
+                      {new Date(m.dataManutencao).toLocaleDateString('pt-BR')}
+                    </span>
+                  </div>
+
+                  {/* Description details */}
+                  <p className="text-slate-400 text-xs leading-relaxed">
+                    {m.descricao}
+                  </p>
+
+                  {/* Spare parts detail */}
+                  {m.pecaTrocada && (
+                    <div className="bg-slate-900/30 px-3 py-1.5 rounded-xl border border-slate-800/40 text-xs inline-flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                      Componente Substituído: <span className="text-slate-300 font-bold">{m.pecaTrocada} ({m.quantidade} unidades)</span>
+                    </div>
+                  )}
+
+                  {/* Before/After Photos Side-by-Side displaying */}
+                  {m.fotos && m.fotos.length > 0 && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                      {/* Before Photos */}
+                      {m.fotos.filter((f) => f.tipo === 'ANTES').length > 0 && (
+                        <div className="bg-slate-900/20 p-3 rounded-xl border border-slate-900/60">
+                          <span className="text-[10px] font-black text-blue-400 tracking-wider flex items-center gap-1 mb-2 uppercase">
+                            <Camera size={12} /> ANTES
+                          </span>
+                          <div className="flex flex-wrap gap-2">
+                            {m.fotos.filter((f) => f.tipo === 'ANTES').map((f) => (
+                              <a 
+                                key={f.id} 
+                                href={f.arquivo} 
+                                target="_blank" 
+                                rel="noreferrer"
+                                className="w-16 h-16 rounded-lg overflow-hidden border border-slate-800 hover:border-slate-700 transition-colors shrink-0 block bg-slate-950"
+                              >
+                                <img src={f.arquivo} className="w-full h-full object-cover" />
+                              </a>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* After Photos */}
+                      {m.fotos.filter((f) => f.tipo === 'DEPOIS').length > 0 && (
+                        <div className="bg-slate-900/20 p-3 rounded-xl border border-slate-900/60">
+                          <span className="text-[10px] font-black text-emerald-400 tracking-wider flex items-center gap-1 mb-2 uppercase">
+                            <Camera size={12} /> DEPOIS
+                          </span>
+                          <div className="flex flex-wrap gap-2">
+                            {m.fotos.filter((f) => f.tipo === 'DEPOIS').map((f) => (
+                              <a 
+                                key={f.id} 
+                                href={f.arquivo} 
+                                target="_blank" 
+                                rel="noreferrer"
+                                className="w-16 h-16 rounded-lg overflow-hidden border border-slate-800 hover:border-slate-700 transition-colors shrink-0 block bg-slate-950"
+                              >
+                                <img src={f.arquivo} className="w-full h-full object-cover" />
+                              </a>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Signatures verification bar */}
+                  <div className="bg-slate-900/40 p-4 rounded-xl border border-slate-800/50 flex flex-col sm:flex-row justify-between gap-4 items-start sm:items-center text-xs">
+                    <div className="flex items-center gap-2 text-slate-400">
+                      <UserCheck size={16} className="text-blue-400 shrink-0" />
+                      <div>
+                        Técnico Responsável: <span className="text-slate-200 font-bold">{m.tecnicoNome}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 text-slate-400">
+                      <CheckCircle size={16} className="text-emerald-400 shrink-0" />
+                      <div>
+                        Contratante / Autorizado: <span className="text-slate-200 font-bold">{m.contratanteNome}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {m.observacoes && (
+                    <p className="text-[11px] text-slate-500 italic px-2">Obs: "{m.observacoes}"</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+      </main>
+
+      {/* Footer bar */}
+      <footer className="max-w-4xl mx-auto w-full px-6 py-6 border-t border-slate-900 text-center text-xs text-slate-600 shrink-0">
+        &copy; {new Date().getFullYear()} Cassios Ar-Condicionado. Todos os direitos reservados.
+      </footer>
+    </div>
+  );
+}
