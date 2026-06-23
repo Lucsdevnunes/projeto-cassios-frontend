@@ -58,16 +58,10 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         isOpen ? 'translate-x-0' : '-translate-x-full'
       } shrink-0`}>
         {/* Brand Header */}
-        <div className="p-6 border-b border-slate-800 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="bg-blue-600/20 p-2 rounded-lg text-blue-400">
-              <ThermometerSnowflake size={24} className="animate-pulse" />
-            </div>
-            <div>
-              <h1 className="font-bold text-lg leading-none tracking-wider text-white">CASSIOS</h1>
-              <span className="text-xs text-slate-400 tracking-wider">HVAC MANAGEMENT</span>
-            </div>
-          </div>
+        <div className="p-4 border-b border-slate-800 flex items-center justify-between gap-3 bg-slate-900">
+          <Link href="/dashboard" className="flex items-center gap-2">
+            <img src="/logo.png" alt="Empório do Ar" className="h-8 w-auto object-contain" />
+          </Link>
 
           {/* Close Button on Mobile */}
           <button 

@@ -118,7 +118,10 @@ export default function Dashboard() {
       {/* Summary Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Total Equipments */}
-        <div className="bg-slate-900/40 border border-slate-800/80 p-6 rounded-2xl backdrop-blur-md flex items-center gap-5">
+        <Link 
+          href="/equipamentos" 
+          className="bg-slate-900/40 border border-slate-800/80 p-6 rounded-2xl backdrop-blur-md flex items-center gap-5 hover:bg-slate-800/30 hover:border-blue-500/50 hover:scale-[1.02] transition-all duration-200 cursor-pointer block"
+        >
           <div className="bg-blue-500/10 p-3.5 rounded-xl text-blue-400 border border-blue-500/20 shadow-inner">
             <Tv size={26} />
           </div>
@@ -126,10 +129,13 @@ export default function Dashboard() {
             <span className="text-xs font-semibold text-slate-400 tracking-wider block">EQUIPAMENTOS</span>
             <p className="text-3xl font-black text-white mt-1">{data.summary.totalEquipments}</p>
           </div>
-        </div>
+        </Link>
 
         {/* Total Maintenances */}
-        <div className="bg-slate-900/40 border border-slate-800/80 p-6 rounded-2xl backdrop-blur-md flex items-center gap-5">
+        <Link 
+          href="/manutencoes" 
+          className="bg-slate-900/40 border border-slate-800/80 p-6 rounded-2xl backdrop-blur-md flex items-center gap-5 hover:bg-slate-800/30 hover:border-emerald-500/50 hover:scale-[1.02] transition-all duration-200 cursor-pointer block"
+        >
           <div className="bg-emerald-500/10 p-3.5 rounded-xl text-emerald-400 border border-emerald-500/20 shadow-inner">
             <Wrench size={26} />
           </div>
@@ -137,10 +143,13 @@ export default function Dashboard() {
             <span className="text-xs font-semibold text-slate-400 tracking-wider block">MANUTENÇÕES</span>
             <p className="text-3xl font-black text-white mt-1">{data.summary.totalMaintenances}</p>
           </div>
-        </div>
+        </Link>
 
         {/* Total Delayed Alert */}
-        <div className="bg-slate-900/40 border border-slate-800/80 p-6 rounded-2xl backdrop-blur-md flex items-center gap-5">
+        <a 
+          href="#alertas-preventiva" 
+          className="bg-slate-900/40 border border-slate-800/80 p-6 rounded-2xl backdrop-blur-md flex items-center gap-5 hover:bg-slate-800/30 hover:border-rose-500/50 hover:scale-[1.02] transition-all duration-200 cursor-pointer block"
+        >
           <div className={`p-3.5 rounded-xl border shadow-inner ${
             data.summary.totalDelayed > 0 
               ? 'bg-rose-500/10 text-rose-400 border-rose-500/20 animate-pulse' 
@@ -152,7 +161,7 @@ export default function Dashboard() {
             <span className="text-xs font-semibold text-slate-400 tracking-wider block">ATRASADOS (&gt;3 meses)</span>
             <p className="text-3xl font-black text-white mt-1">{data.summary.totalDelayed}</p>
           </div>
-        </div>
+        </a>
       </div>
 
       {/* Chart Layout */}
@@ -235,7 +244,7 @@ export default function Dashboard() {
         {/* Alerts panel (occupies 2 cols) */}
         <div className="xl:col-span-2 space-y-6">
           {/* Preventives and Atrasos alerts card */}
-          <div className="bg-slate-900/40 border border-slate-800/80 p-6 rounded-2xl backdrop-blur-md">
+          <div id="alertas-preventiva" className="bg-slate-900/40 border border-slate-800/80 p-6 rounded-2xl backdrop-blur-md scroll-mt-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-800/60">
               <div>
                 <h3 className="text-base font-bold text-slate-200 flex items-center gap-2">

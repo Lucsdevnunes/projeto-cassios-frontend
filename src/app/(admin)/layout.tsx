@@ -39,7 +39,7 @@ export default function AdminLayout({
         </button>
         
         <div className="flex items-center gap-2">
-          <span className="font-extrabold text-slate-200 text-sm tracking-widest">CASSIOS</span>
+          <img src="/logo.png" alt="Empório do Ar" className="h-6 w-auto object-contain" />
         </div>
 
         <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center font-bold text-xs text-blue-400 border border-slate-700">

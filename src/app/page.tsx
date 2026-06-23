@@ -197,17 +197,10 @@ export default function Home() {
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-blue-600/10 rounded-full blur-[160px] -z-10 pointer-events-none"></div>
       <div className="absolute bottom-0 right-10 w-[400px] h-[400px] bg-teal-500/5 rounded-full blur-[120px] -z-10 pointer-events-none"></div>
 
-      {/* Header */}
-      <header className="max-w-7xl mx-auto w-full px-6 py-6 flex items-center justify-between border-b border-slate-900 z-10">
-        <div className="flex items-center gap-3">
-          <div className="bg-blue-600/20 p-2 rounded-xl text-blue-400">
-            <ThermometerSnowflake size={28} />
-          </div>
-          <div>
-            <h1 className="font-black text-xl tracking-wider text-white">CASSIOS</h1>
-            <span className="text-[10px] text-slate-400 tracking-wider">HVAC PLATFORM</span>
-          </div>
-        </div>
+      <header className="max-w-7xl mx-auto w-full px-6 py-4 flex items-center justify-between border-b border-slate-900 z-10">
+        <Link href="/" className="flex items-center gap-3">
+          <img src="/logo.png" alt="Empório do Ar" className="h-10 w-auto object-contain" />
+        </Link>
         <Link 
           href="/login"
           className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold bg-blue-600 hover:bg-blue-500 transition-all duration-200 shadow-lg shadow-blue-600/20 hover:shadow-blue-500/30"
