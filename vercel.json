@@ -1,0 +1,14 @@
+{
+  "redirects": [
+    {
+      "source": "/equipamento/:id",
+      "destination": "/equipamento?id=:id",
+      "permanent": true
+    },
+    {
+      "source": "/estabelecimento/:id",
+      "destination": "/estabelecimento?id=:id",
+      "permanent": true
+    }
+  ]
+}

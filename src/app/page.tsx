@@ -51,33 +51,83 @@ export default function Home() {
 
   // Helper to parse scanned content
   const handleDecodedText = (text: string) => {
-    let parsedUuid = text.trim();
+    let parsedText = text.trim();
     
-    // Check for establishment QR code
-    if (text.includes('/estabelecimento/')) {
-      const parts = text.split('/estabelecimento/');
-      const establishmentUuid = parts[parts.length - 1].split('?')[0];
-      if (establishmentUuid.length > 10) {
-        stopCamera();
-        setSuccessMsg('QR Code de Estabelecimento detectado! Redirecionando...');
-        setTimeout(() => {
-          router.push(`/estabelecimento?id=${establishmentUuid}`);
-        }, 1000);
-        return;
+    try {
+      // If it's a URL, parse it using the URL API
+      if (parsedText.startsWith('http://') || parsedText.startsWith('https://')) {
+        const url = new URL(parsedText);
+        
+        // Scenario 1: /estabelecimento?id=uuid or /estabelecimento/uuid
+        if (url.pathname.includes('/estabelecimento')) {
+          let id = url.searchParams.get('id');
+          if (!id) {
+            const parts = url.pathname.split('/estabelecimento/');
+            id = parts[parts.length - 1];
+          }
+          if (id && id.length > 10) {
+            stopCamera();
+            setSuccessMsg('QR Code de Estabelecimento detectado! Redirecionando...');
+            setTimeout(() => {
+              router.push(`/estabelecimento?id=${id}`);
+            }, 1000);
+            return;
+          }
+        }
+        
+        // Scenario 2: /equipamento?id=uuid or /equipamento/uuid
+        if (url.pathname.includes('/equipamento')) {
+          let id = url.searchParams.get('id');
+          if (!id) {
+            const parts = url.pathname.split('/equipamento/');
+            id = parts[parts.length - 1];
+          }
+          if (id && id.length > 10) {
+            stopCamera();
+            setSuccessMsg('QR Code de Equipamento detectado! Redirecionando...');
+            setTimeout(() => {
+              router.push(`/equipamento?id=${id}`);
+            }, 1000);
+            return;
+          }
+        }
+      }
+    } catch (e) {
+      console.error('URL parsing failed, falling back to string checks', e);
+    }
+
+    // Fallback checks for custom formats or simple text splits
+    if (parsedText.includes('/estabelecimento')) {
+      if (parsedText.includes('?id=')) {
+        const parts = parsedText.split('?id=');
+        parsedText = parts[parts.length - 1].split('&')[0];
+      } else {
+        const parts = parsedText.split('/estabelecimento/');
+        parsedText = parts[parts.length - 1].split('?')[0];
+      }
+      stopCamera();
+      setSuccessMsg('QR Code de Estabelecimento detectado! Redirecionando...');
+      setTimeout(() => {
+        router.push(`/estabelecimento?id=${parsedText}`);
+      }, 1000);
+      return;
+    }
+
+    if (parsedText.includes('/equipamento')) {
+      if (parsedText.includes('?id=')) {
+        const parts = parsedText.split('?id=');
+        parsedText = parts[parts.length - 1].split('&')[0];
+      } else {
+        const parts = parsedText.split('/equipamento/');
+        parsedText = parts[parts.length - 1].split('?')[0];
       }
     }
 
-    // Check for independent equipment QR code
-    if (text.includes('/equipamento/')) {
-      const parts = text.split('/equipamento/');
-      parsedUuid = parts[parts.length - 1].split('?')[0];
-    }
-
-    if (parsedUuid.length > 10) {
+    if (parsedText.length > 10) {
       stopCamera();
       setSuccessMsg('QR Code de Equipamento detectado! Redirecionando...');
       setTimeout(() => {
-        router.push(`/equipamento?id=${parsedUuid}`);
+        router.push(`/equipamento?id=${parsedText}`);
       }, 1000);
     } else {
       setError('O conteúdo do QR Code lido não é um identificador válido de estabelecimento ou equipamento.');
