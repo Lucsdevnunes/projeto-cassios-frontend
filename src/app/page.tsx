@@ -46,7 +46,7 @@ export default function Home() {
       return;
     }
     setError('');
-    router.push(`/equipamento/${uuid.trim()}`);
+    router.push(`/equipamento?id=${uuid.trim()}`);
   };
 
   // Helper to parse scanned content
@@ -61,7 +61,7 @@ export default function Home() {
         stopCamera();
         setSuccessMsg('QR Code de Estabelecimento detectado! Redirecionando...');
         setTimeout(() => {
-          router.push(`/estabelecimento/${establishmentUuid}`);
+          router.push(`/estabelecimento?id=${establishmentUuid}`);
         }, 1000);
         return;
       }
@@ -77,7 +77,7 @@ export default function Home() {
       stopCamera();
       setSuccessMsg('QR Code de Equipamento detectado! Redirecionando...');
       setTimeout(() => {
-        router.push(`/equipamento/${parsedUuid}`);
+        router.push(`/equipamento?id=${parsedUuid}`);
       }, 1000);
     } else {
       setError('O conteúdo do QR Code lido não é um identificador válido de estabelecimento ou equipamento.');

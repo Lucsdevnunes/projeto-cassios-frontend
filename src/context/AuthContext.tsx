@@ -52,7 +52,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const isPublicPath = 
       pathname === '/login' || 
       pathname === '/' || 
-      pathname.startsWith('/equipamento/');
+      pathname === '/equipamento' ||
+      pathname === '/estabelecimento';
 
     if (!user && !isPublicPath) {
       router.push('/login');

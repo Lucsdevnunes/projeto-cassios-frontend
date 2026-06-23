@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import { ApiClient } from '../../../lib/api';
-import { useAuth } from '../../../context/AuthContext';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { ApiClient } from '../../lib/api';
+import { useAuth } from '../../context/AuthContext';
 import { 
   ThermometerSnowflake, 
   Info, 
@@ -54,7 +54,8 @@ interface EquipmentPublic {
 }
 
 export default function PublicEquipmentTimeline() {
-  const { uuid } = useParams();
+  const searchParams = useSearchParams();
+  const uuid = searchParams.get('id');
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
   

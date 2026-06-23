@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
-import { ApiClient } from '../../../lib/api';
+import { useSearchParams } from 'next/navigation';
+import { ApiClient } from '../../lib/api';
 import { 
   ThermometerSnowflake, 
   Info, 
@@ -41,7 +41,8 @@ interface EstablishmentPublic {
 }
 
 export default function PublicEstablishmentTimeline() {
-  const { uuid } = useParams();
+  const searchParams = useSearchParams();
+  const uuid = searchParams.get('id');
   const [establishment, setEstablishment] = useState<EstablishmentPublic | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
