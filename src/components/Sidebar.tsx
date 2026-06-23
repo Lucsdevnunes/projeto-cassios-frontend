@@ -59,8 +59,8 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       } shrink-0`}>
         {/* Brand Header */}
         <div className="p-4 border-b border-slate-800 flex items-center justify-between gap-3 bg-slate-900">
-          <Link href="/dashboard" className="flex items-center gap-2">
-            <img src="/logo.png" alt="Empório do Ar" className="h-8 w-auto object-contain" />
+          <Link href="/dashboard" className="flex items-center w-full justify-center">
+            <img src="/logo.png" alt="Empório do Ar" className="h-16 w-full object-contain max-w-[200px]" />
           </Link>
 
           {/* Close Button on Mobile */}
