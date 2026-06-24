@@ -92,7 +92,7 @@ export default function EquipmentsPage() {
   const [maintServico, setMaintServico] = useState('Limpeza Preventiva');
   const [maintDescricao, setMaintDescricao] = useState('');
   const [maintPeca, setMaintPeca] = useState('');
-  const [maintQtd, setMaintQtd] = useState(0);
+  const [maintQtd, setMaintQtd] = useState<number | ''>('');
   const [maintTecnico, setMaintTecnico] = useState('');
   const [maintContratante, setMaintContratante] = useState('');
   const [maintObs, setMaintObs] = useState('');
@@ -475,7 +475,7 @@ export default function EquipmentsPage() {
       servicoRealizado: maintServico,
       descricao: maintDescricao,
       pecaTrocada: maintPeca.trim() || undefined,
-      quantidade: maintQtd > 0 ? Number(maintQtd) : undefined,
+      quantidade: maintQtd && Number(maintQtd) > 0 ? Number(maintQtd) : undefined,
       tecnicoNome: maintTecnico,
       tecnicoAssinatura: currentTechSig,
       contratanteNome: maintContratante,
@@ -502,7 +502,7 @@ export default function EquipmentsPage() {
     setMaintServico('Limpeza Preventiva');
     setMaintDescricao('');
     setMaintPeca('');
-    setMaintQtd(0);
+    setMaintQtd('');
     setMaintContratante('');
     setMaintObs('');
     setPhotosBefore([]);
@@ -1243,7 +1243,10 @@ export default function EquipmentsPage() {
                     type="number"
                     min={0}
                     value={maintQtd}
-                    onChange={(e) => setMaintQtd(Number(e.target.value))}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setMaintQtd(val === '' ? '' : Number(val));
+                    }}
                     className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-slate-200 text-sm outline-none focus:border-blue-500"
                   />
                 </div>
