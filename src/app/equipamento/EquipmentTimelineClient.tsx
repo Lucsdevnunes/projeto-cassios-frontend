@@ -374,7 +374,7 @@ export default function PublicEquipmentTimeline() {
         {/* Co-Branding Contact Banner */}
         <section className="bg-slate-900/60 border border-slate-800/80 p-6 rounded-2xl backdrop-blur-md flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-5">
-            <div className="bg-slate-950/80 p-3 rounded-2xl border border-slate-800/60 flex items-center justify-center shrink-0 w-32 h-16 relative overflow-hidden">
+            <div className="bg-white p-1.5 rounded-2xl border border-slate-800/60 flex items-center justify-center shrink-0 w-44 h-20 relative overflow-hidden">
               <img 
                 src="/logo-emporio.png" 
                 alt="Empório do Ar" 
