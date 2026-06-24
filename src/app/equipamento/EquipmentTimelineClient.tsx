@@ -47,6 +47,8 @@ interface EquipmentPublic {
   tipo: string;
   dataInstalacao: string;
   observacoes?: string;
+  frequenciaManutencao: number;
+  proximaManutencao?: string;
   criadoEm: string;
   manutencoes: MaintenanceEvent[];
   clienteId?: string | null;
@@ -448,6 +450,29 @@ export default function PublicEquipmentTimeline() {
               <p className="font-mono text-slate-400 text-[10px] break-all mt-0.5">{eq.id}</p>
             </div>
           </div>
+
+          {/* Preventive Maintenance Schedule Status (Public View) */}
+          {eq.proximaManutencao && (
+            <div className="bg-slate-950/60 p-4 rounded-xl border border-slate-800/60 mt-4 flex items-center justify-between text-xs">
+              <div>
+                <span className="text-slate-500 block">Próxima Manutenção Preventiva</span>
+                <p className="font-bold text-slate-200 mt-0.5">
+                  {new Date(eq.proximaManutencao).toLocaleDateString('pt-BR')} (a cada {eq.frequenciaManutencao ?? 6} meses)
+                </p>
+              </div>
+              <div>
+                {new Date(eq.proximaManutencao) < new Date() ? (
+                  <span className="px-3 py-1 bg-red-950 border border-red-800 text-red-400 text-[10px] font-bold rounded-full uppercase tracking-wider">
+                    ⚠️ Atrasada
+                  </span>
+                ) : (
+                  <span className="px-3 py-1 bg-emerald-950 border border-emerald-800 text-emerald-400 text-[10px] font-bold rounded-full uppercase tracking-wider">
+                    ✅ Em dia
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
 
           <div className="pt-4 border-t border-slate-800/60 flex items-start gap-2.5 text-xs text-slate-400">
             <MapPin size={16} className="text-slate-500 shrink-0 mt-0.5" />

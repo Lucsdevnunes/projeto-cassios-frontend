@@ -334,7 +334,7 @@ export default function Dashboard() {
                       <span className="text-[10px] font-black text-blue-400 tracking-wider">A VENCER</span>
                       <h4 className="font-bold text-slate-200 mt-1">{eq.codigoInterno}</h4>
                       <p className="text-xs text-slate-400 mt-0.5">{eq.modelo} ({eq.marca})</p>
-                      <p className="text-[10px] text-slate-500 mt-2">Última preventiva: {new Date(eq.lastMaintenance).toLocaleDateString('pt-BR')}</p>
+                      <p className="text-[10px] text-slate-500 mt-2">Vence em: {eq.proximaManutencao ? new Date(eq.proximaManutencao).toLocaleDateString('pt-BR') : 'Sem data'}</p>
                     </div>
                     <Link
                       href={`/equipamentos?id=${eq.id}`}

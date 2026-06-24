@@ -37,6 +37,8 @@ interface Equipment {
   tipo: string;
   dataInstalacao: string;
   observacoes?: string;
+  frequenciaManutencao: number;
+  proximaManutencao?: string;
   criadoEm: string;
   criador?: { nome: string; email: string };
   manutencoes?: any[];
@@ -83,6 +85,8 @@ export default function EquipmentsPage() {
   const [tipo, setTipo] = useState('SPLIT');
   const [dataInstalacao, setDataInstalacao] = useState(new Date().toISOString().split('T')[0]);
   const [observacoes, setObservacoes] = useState('');
+  const [frequenciaManutencao, setFrequenciaManutencao] = useState(6);
+  const [proximaManutencao, setProximaManutencao] = useState('');
 
   // Maintenance form state fields
   const [maintServico, setMaintServico] = useState('Limpeza Preventiva');
@@ -164,6 +168,8 @@ export default function EquipmentsPage() {
     setTipo('SPLIT');
     setDataInstalacao(new Date().toISOString().split('T')[0]);
     setObservacoes('');
+    setFrequenciaManutencao(6);
+    setProximaManutencao('');
     setClienteId(typeof prefilledClienteId === 'string' ? prefilledClienteId : '');
     setFormError('');
     setShowFormModal(true);
@@ -181,6 +187,8 @@ export default function EquipmentsPage() {
     setTipo(eq.tipo);
     setDataInstalacao(new Date(eq.dataInstalacao).toISOString().split('T')[0]);
     setObservacoes(eq.observacoes || '');
+    setFrequenciaManutencao(eq.frequenciaManutencao ?? 6);
+    setProximaManutencao(eq.proximaManutencao ? new Date(eq.proximaManutencao).toISOString().split('T')[0] : '');
     setClienteId(eq.clienteId || '');
     setFormError('');
     setShowFormModal(true);
@@ -203,6 +211,8 @@ export default function EquipmentsPage() {
       dataInstalacao: new Date(dataInstalacao).toISOString(),
       observacoes: observacoes.trim() || undefined,
       clienteId: clienteId || null,
+      frequenciaManutencao: Number(frequenciaManutencao),
+      proximaManutencao: proximaManutencao ? new Date(proximaManutencao).toISOString() : undefined,
     };
 
     try {
@@ -763,6 +773,31 @@ export default function EquipmentsPage() {
                     <span className="text-slate-500 block">Estabelecimento</span>
                     <p className="font-semibold text-blue-400">{selectedEq.cliente?.nome || 'Não associado'}</p>
                   </div>
+                 </div>
+
+                {/* Preventive Maintenance Schedule Status */}
+                <div className="bg-slate-950/60 p-3 rounded-xl border border-slate-800/60 mt-3 flex items-center justify-between text-xs">
+                  <div>
+                    <span className="text-slate-500 block text-[10px]">Próxima Preventiva (Ciclo: {selectedEq.frequenciaManutencao ?? 6} meses)</span>
+                    <p className="font-semibold text-slate-200 mt-0.5">
+                      {selectedEq.proximaManutencao 
+                        ? new Date(selectedEq.proximaManutencao).toLocaleDateString('pt-BR') 
+                        : 'Não agendada'}
+                    </p>
+                  </div>
+                  <div>
+                    {selectedEq.proximaManutencao && (
+                      new Date(selectedEq.proximaManutencao) < new Date() ? (
+                        <span className="px-2 py-0.5 bg-red-950 border border-red-800 text-red-400 text-[10px] font-bold rounded-full">
+                          ⚠️ ATRASADA
+                        </span>
+                      ) : (
+                        <span className="px-2 py-0.5 bg-emerald-950 border border-emerald-800 text-emerald-400 text-[10px] font-bold rounded-full">
+                          ✅ EM DIA
+                        </span>
+                      )
+                    )}
+                  </div>
                 </div>
 
                 <div className="text-xs border-t border-slate-800/50 pt-3 space-y-2">
@@ -1036,6 +1071,31 @@ export default function EquipmentsPage() {
                   onChange={(e) => setEndereco(e.target.value)}
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-slate-200 text-sm outline-none focus:border-blue-500"
                 />
+              </div>
+
+              {/* Preventive Maintenance Schedule Settings */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-400">Periodicidade de Preventivas (Meses)</label>
+                  <input
+                    type="number"
+                    required
+                    min={1}
+                    value={frequenciaManutencao}
+                    onChange={(e) => setFrequenciaManutencao(Number(e.target.value))}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-slate-200 text-sm outline-none focus:border-blue-500"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-400">Próxima Preventiva (Opcional)</label>
+                  <input
+                    type="date"
+                    value={proximaManutencao}
+                    onChange={(e) => setProximaManutencao(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-slate-200 text-sm outline-none focus:border-blue-500"
+                  />
+                </div>
               </div>
 
               {/* Notes */}
