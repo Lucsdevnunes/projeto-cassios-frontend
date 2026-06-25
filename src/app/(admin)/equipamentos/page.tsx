@@ -96,6 +96,13 @@ export default function EquipmentsPage() {
   const [maintTecnico, setMaintTecnico] = useState('');
   const [maintContratante, setMaintContratante] = useState('');
   const [maintObs, setMaintObs] = useState('');
+
+  // Catalog and selected materials
+  const [catalogMaterials, setCatalogMaterials] = useState<any[]>([]);
+  const [selectedMaterials, setSelectedMaterials] = useState<any[]>([]);
+  const [currentMaterialId, setCurrentMaterialId] = useState<string>('');
+  const [currentMatQty, setCurrentMatQty] = useState<number | ''>('');
+  const [currentMatObs, setCurrentMatObs] = useState<string>('');
   
   // Base64 photos
   const [photosBefore, setPhotosBefore] = useState<string[]>([]);
@@ -112,6 +119,7 @@ export default function EquipmentsPage() {
   useEffect(() => {
     fetchEquipments();
     fetchClients();
+    fetchMaterials();
     
     // Check if query param contains equipment ID to open details directly
     if (typeof window !== 'undefined') {
@@ -127,6 +135,15 @@ export default function EquipmentsPage() {
       }
     }
   }, []);
+
+  const fetchMaterials = async () => {
+    try {
+      const res = await ApiClient.get('/materials');
+      setCatalogMaterials(res);
+    } catch (err) {
+      console.error('Erro ao carregar materiais:', err);
+    }
+  };
 
   const fetchClients = async () => {
     try {
@@ -477,8 +494,12 @@ export default function EquipmentsPage() {
       dataManutencao: new Date().toISOString(),
       servicoRealizado: maintServico,
       descricao: maintDescricao,
-      pecaTrocada: maintPeca.trim() || undefined,
-      quantidade: maintQtd && Number(maintQtd) > 0 ? Number(maintQtd) : undefined,
+      pecaTrocada: selectedMaterials.length > 0 
+        ? selectedMaterials.map(m => `${m.nome} (${m.quantidade} ${m.unidade})`).join(', ') 
+        : undefined,
+      quantidade: selectedMaterials.length > 0 
+        ? Math.round(selectedMaterials.reduce((acc, m) => acc + (m.unidade === 'UN' ? m.quantidade : 1), 0))
+        : 0,
       tecnicoNome: maintTecnico,
       tecnicoAssinatura: currentTechSig,
       contratanteNome: maintContratante,
@@ -486,6 +507,11 @@ export default function EquipmentsPage() {
       observacoes: maintObs.trim() || undefined,
       fotosAntes: photosBefore.length > 0 ? photosBefore : undefined,
       fotosDepois: photosAfter.length > 0 ? photosAfter : undefined,
+      materiais: selectedMaterials.map((m) => ({
+        materialId: m.materialId,
+        quantidade: m.quantidade,
+        observacao: m.observacao || undefined,
+      })),
     };
 
     try {
@@ -511,6 +537,10 @@ export default function EquipmentsPage() {
     setPhotosBefore([]);
     setPhotosAfter([]);
     setTechSig('');
+    setSelectedMaterials([]);
+    setCurrentMaterialId('');
+    setCurrentMatQty('');
+    setCurrentMatObs('');
     setClientSig('');
     setTechDrawn(false);
     setClientDrawn(false);
@@ -864,12 +894,29 @@ export default function EquipmentsPage() {
 
                         <p className="text-slate-400 leading-relaxed text-[11px]">{m.descricao}</p>
 
-                        {m.pecaTrocada && (
+                        {m.materiais && m.materiais.length > 0 ? (
+                          <div className="mt-2 p-2.5 rounded-xl bg-slate-950/50 border border-slate-800/40 text-[11px]">
+                            <div className="text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-1">Materiais Utilizados:</div>
+                            <div className="divide-y divide-slate-800/40">
+                              {m.materiais.map((mat: any, mIdx: number) => (
+                                <div key={mIdx} className="py-1 flex justify-between items-center text-slate-300">
+                                  <div>
+                                    <span className="font-semibold text-slate-200">{mat.material.nome}</span>
+                                    {mat.observacao && <span className="text-[9px] text-slate-500 italic block">Obs: {mat.observacao}</span>}
+                                  </div>
+                                  <div className="font-bold text-blue-400">
+                                    {mat.quantidade} <span className="text-[9px] text-slate-500 font-normal">{mat.material.unidade}</span>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ) : m.pecaTrocada ? (
                           <div className="bg-slate-950/50 px-2.5 py-1 rounded-md border border-slate-800/40 text-[10px] inline-flex items-center gap-1.5">
                             <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
                             Peça: <span className="text-slate-300 font-bold">{m.pecaTrocada} ({m.quantidade})</span>
                           </div>
-                        )}
+                        ) : null}
 
                         {/* Photos display */}
                         {m.fotos && m.fotos.length > 0 && (
@@ -1227,32 +1274,180 @@ export default function EquipmentsPage() {
                 />
               </div>
 
-              {/* Parts Replaced */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="md:col-span-2 space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-400">Peça Trocada (Se houver)</label>
-                  <input
-                    type="text"
-                    placeholder="EX: Capacitor de Partida 35uF, Sensor de Degelo..."
-                    value={maintPeca}
-                    onChange={(e) => setMaintPeca(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-slate-200 text-sm outline-none focus:border-blue-500"
-                  />
+              {/* Peças e Materiais Utilizados */}
+              <div className="space-y-3 p-4 rounded-2xl bg-slate-950/40 border border-slate-800/60">
+                <label className="text-xs font-bold text-slate-300 flex items-center gap-1.5 uppercase tracking-wider">
+                  <Wrench size={14} className="text-blue-400" />
+                  Peças e Materiais Utilizados na OS
+                </label>
+                
+                {/* Form to Add Material */}
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+                  {/* Dropdown Material */}
+                  <div className="md:col-span-6 space-y-1.5">
+                    <label className="text-[10px] font-semibold text-slate-400">Peça / Insumo</label>
+                    <select
+                      value={currentMaterialId}
+                      onChange={(e) => {
+                        setCurrentMaterialId(e.target.value);
+                        setCurrentMatQty('');
+                      }}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-slate-200 text-xs outline-none focus:border-blue-500"
+                    >
+                      <option value="">-- Selecione --</option>
+                      {Object.entries(
+                        catalogMaterials.reduce((acc: any, item) => {
+                          (acc[item.categoria] = acc[item.categoria] || []).push(item);
+                          return acc;
+                        }, {})
+                      ).map(([categoria, items]: any) => (
+                        <optgroup label={categoria} key={categoria}>
+                          {items.map((item: any) => (
+                            <option value={item.id} key={item.id}>
+                              {item.nome} ({item.unidade})
+                            </option>
+                          ))}
+                        </optgroup>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Quantity with dynamic unit label */}
+                  <div className="md:col-span-3 space-y-1.5">
+                    <label className="text-[10px] font-semibold text-slate-400">
+                      {(() => {
+                        const selectedMat = catalogMaterials.find(m => m.id === currentMaterialId);
+                        if (!selectedMat) return 'Quantidade';
+                        if (selectedMat.unidade === 'M') return 'Metragem (m)';
+                        if (selectedMat.unidade === 'KG') return 'Peso (kg)';
+                        if (selectedMat.unidade === 'L') return 'Volume (l)';
+                        return 'Quantidade (un)';
+                      })()}
+                    </label>
+                    <input
+                      type="number"
+                      step={(() => {
+                        const selectedMat = catalogMaterials.find(m => m.id === currentMaterialId);
+                        return selectedMat?.unidade === 'UN' ? '1' : '0.01';
+                      })()}
+                      min="0.01"
+                      placeholder={(() => {
+                        const selectedMat = catalogMaterials.find(m => m.id === currentMaterialId);
+                        if (!selectedMat) return 'Ex: 1';
+                        if (selectedMat.unidade === 'M') return 'Ex: 5.50';
+                        if (selectedMat.unidade === 'KG') return 'Ex: 1.25';
+                        if (selectedMat.unidade === 'L') return 'Ex: 0.50';
+                        return 'Ex: 2';
+                      })()}
+                      value={currentMatQty}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setCurrentMatQty(val === '' ? '' : Number(val));
+                      }}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-slate-200 text-xs outline-none focus:border-blue-500"
+                    />
+                  </div>
+
+                  {/* Add Button */}
+                  <div className="md:col-span-3">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!currentMaterialId) return;
+                        if (!currentMatQty || Number(currentMatQty) <= 0) {
+                          alert('Por favor, informe uma quantidade válida maior que zero.');
+                          return;
+                        }
+                        const mat = catalogMaterials.find(m => m.id === currentMaterialId);
+                        if (!mat) return;
+                        if (mat.unidade === 'UN' && !Number.isInteger(Number(currentMatQty))) {
+                          alert('A quantidade para UNIDADE (UN) deve ser um número inteiro.');
+                          return;
+                        }
+                        
+                        const existingIndex = selectedMaterials.findIndex(item => item.materialId === currentMaterialId);
+                        if (existingIndex > -1) {
+                          const updated = [...selectedMaterials];
+                          updated[existingIndex].quantidade = Number((updated[existingIndex].quantidade + Number(currentMatQty)).toFixed(2));
+                          if (currentMatObs.trim()) {
+                            updated[existingIndex].observacao = currentMatObs.trim();
+                          }
+                          setSelectedMaterials(updated);
+                        } else {
+                          setSelectedMaterials(prev => [...prev, {
+                            materialId: currentMaterialId,
+                            nome: mat.nome,
+                            categoria: mat.categoria,
+                            unidade: mat.unidade,
+                            quantidade: Number(Number(currentMatQty).toFixed(2)),
+                            observacao: currentMatObs.trim() || undefined,
+                          }]);
+                        }
+                        setCurrentMaterialId('');
+                        setCurrentMatQty('');
+                        setCurrentMatObs('');
+                      }}
+                      className="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-1 cursor-pointer"
+                    >
+                      <Plus size={14} /> Add Peça
+                    </button>
+                  </div>
                 </div>
 
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-400">Quantidade</label>
-                  <input
-                    type="number"
-                    min={0}
-                    value={maintQtd}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      setMaintQtd(val === '' ? '' : Number(val));
-                    }}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-slate-200 text-sm outline-none focus:border-blue-500"
-                  />
-                </div>
+                {/* Observation line */}
+                {currentMaterialId && (
+                  <div className="space-y-1.5 animate-fadeIn">
+                    <label className="text-[10px] font-semibold text-slate-400">Observações adicionais para este item (opcional)</label>
+                    <input
+                      type="text"
+                      placeholder="Ex: Trocado capacitor permanente da evaporadora, cabo PP para interligação..."
+                      value={currentMatObs}
+                      onChange={(e) => setCurrentMatObs(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 text-xs outline-none focus:border-blue-500"
+                    />
+                  </div>
+                )}
+
+                {/* Table of selected materials */}
+                {selectedMaterials.length > 0 && (
+                  <div className="border border-slate-800/80 rounded-xl overflow-hidden bg-slate-950/30 mt-2">
+                    <table className="w-full text-left border-collapse text-[11px]">
+                      <thead>
+                        <tr className="bg-slate-900/60 border-b border-slate-800 text-slate-400 font-semibold uppercase tracking-wider">
+                          <th className="p-2.5">Item / Categoria</th>
+                          <th className="p-2.5 text-center">Quantidade</th>
+                          <th className="p-2.5">Obs. Específica</th>
+                          <th className="p-2.5 text-center">Ação</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-800/60">
+                        {selectedMaterials.map((item, idx) => (
+                          <tr key={idx} className="hover:bg-slate-900/20 text-slate-300">
+                            <td className="p-2.5">
+                              <div className="font-semibold text-slate-200">{item.nome}</div>
+                              <div className="text-[9px] text-slate-500">{item.categoria}</div>
+                            </td>
+                            <td className="p-2.5 text-center font-bold text-blue-400">
+                              {item.quantidade} <span className="text-[9px] text-slate-500 font-normal">{item.unidade}</span>
+                            </td>
+                            <td className="p-2.5 text-slate-400 italic">
+                              {item.observacao || '-'}
+                            </td>
+                            <td className="p-2.5 text-center">
+                              <button
+                                type="button"
+                                onClick={() => setSelectedMaterials(prev => prev.filter((_, i) => i !== idx))}
+                                className="p-1 rounded-md bg-rose-600/10 hover:bg-rose-600 text-rose-500 hover:text-white transition-colors cursor-pointer"
+                              >
+                                <Trash2 size={12} />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
 
               {/* Multi-Photo Upload before/after */}

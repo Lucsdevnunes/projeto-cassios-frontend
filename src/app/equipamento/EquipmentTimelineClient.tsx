@@ -32,6 +32,18 @@ interface MaintenanceEvent {
   contratanteAssinatura: string;
   observacoes?: string;
   fotos: { id: string; tipo: 'ANTES' | 'DEPOIS'; arquivo: string }[];
+  materiais?: {
+    id: string;
+    quantidade: number;
+    observacao?: string;
+    criadoPor: string;
+    material: {
+      id: string;
+      nome: string;
+      categoria: string;
+      unidade: string;
+    };
+  }[];
 }
 
 interface EquipmentPublic {
@@ -214,7 +226,20 @@ export default function PublicEquipmentTimeline() {
           yOffset += (splitDescription.length * 4.5) + 3;
 
           // Spare parts details
-          if (m.pecaTrocada) {
+          // Spare parts details
+          if (m.materiais && m.materiais.length > 0) {
+            checkPageBreak(5 * m.materiais.length + 8, pageNum);
+            doc.setFont('Helvetica', 'bold');
+            doc.text('Peças e Materiais Utilizados:', 15, yOffset);
+            yOffset += 5;
+            doc.setFont('Helvetica', 'normal');
+            for (const mat of m.materiais) {
+              const text = `- ${mat.material.nome}: ${mat.quantidade} ${mat.material.unidade}${mat.observacao ? ` (Obs: ${mat.observacao})` : ''}`;
+              doc.text(text, 18, yOffset);
+              yOffset += 4.5;
+            }
+            yOffset += 1.5;
+          } else if (m.pecaTrocada) {
             checkPageBreak(8, pageNum);
             doc.setFont('Helvetica', 'bold');
             doc.text('Peças Trocadas: ', 15, yOffset);
@@ -534,12 +559,29 @@ export default function PublicEquipmentTimeline() {
                   </p>
 
                   {/* Spare parts detail */}
-                  {m.pecaTrocada && (
+                  {m.materiais && m.materiais.length > 0 ? (
+                    <div className="p-3 rounded-xl bg-slate-900/30 border border-slate-800/40 text-xs space-y-1">
+                      <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Peças e Materiais Utilizados:</div>
+                      <div className="divide-y divide-slate-800/30">
+                        {m.materiais.map((mat: any, mIdx: number) => (
+                          <div key={mIdx} className="py-1 flex justify-between items-center text-slate-300">
+                            <div>
+                              <span className="font-semibold text-slate-200">{mat.material.nome}</span>
+                              {mat.observacao && <span className="text-[10px] text-slate-500 italic block">Obs: {mat.observacao}</span>}
+                            </div>
+                            <div className="font-bold text-blue-400">
+                              {mat.quantidade} <span className="text-[10px] text-slate-500 font-normal">{mat.material.unidade}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : m.pecaTrocada ? (
                     <div className="bg-slate-900/30 px-3 py-1.5 rounded-xl border border-slate-800/40 text-xs inline-flex items-center gap-2">
                       <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
                       Componente Substituído: <span className="text-slate-300 font-bold">{m.pecaTrocada} ({m.quantidade} unidades)</span>
                     </div>
-                  )}
+                  ) : null}
 
                   {/* Before/After Photos Side-by-Side displaying */}
                   {m.fotos && m.fotos.length > 0 && (
