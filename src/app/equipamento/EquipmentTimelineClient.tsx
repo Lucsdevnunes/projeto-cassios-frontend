@@ -15,7 +15,13 @@ import {
   Camera, 
   UserCheck,
   Phone,
-  MessageSquare
+  MessageSquare,
+  Tag,
+  Cpu,
+  Barcode,
+  Snowflake,
+  Layers,
+  Building2
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 
@@ -361,22 +367,22 @@ export default function PublicEquipmentTimeline() {
       <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-teal-500/5 rounded-full blur-[100px] -z-10 pointer-events-none"></div>
 
       {/* Header bar */}
-      <header className="bg-slate-900/60 border-b border-slate-900/80 backdrop-blur-md sticky top-0 z-20 shrink-0">
-        <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="bg-blue-600/20 p-2 rounded-xl text-blue-400">
-              <ThermometerSnowflake size={22} />
+      <header className="bg-gradient-to-r from-sky-100/90 via-sky-50/85 to-blue-100/90 border-b border-sky-200/60 backdrop-blur-md sticky top-0 z-20 shrink-0 shadow-sm">
+        <div className="max-w-4xl mx-auto px-6 py-3.5 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="bg-gradient-to-br from-blue-500 to-sky-400 p-2 rounded-xl text-white shadow-md shadow-blue-500/20">
+              <Snowflake size={18} className="animate-[spin_10s_linear_infinite]" />
             </div>
             <div>
-              <span className="text-[10px] text-slate-500 font-bold block leading-none">CONSULTA PÚBLICA</span>
-              <h1 className="font-extrabold text-white text-base leading-tight mt-0.5">{eq.codigoInterno}</h1>
+              <h1 className="font-black text-slate-800 text-base leading-none tracking-wide">Empório Do Ar</h1>
+              <span className="text-[8px] text-slate-500 font-extrabold block tracking-wider uppercase mt-1 leading-none">SISTEMA DE GESTÃO DE MANUTENÇÃO</span>
             </div>
           </div>
           
           <button
             onClick={downloadHistoryPdf}
             disabled={generatingPdf}
-            className="flex items-center gap-2 py-2 px-4 bg-blue-600 hover:bg-blue-500 disabled:bg-blue-600/50 text-white rounded-xl text-xs font-semibold transition-all shadow-md shadow-blue-600/10 cursor-pointer"
+            className="flex items-center gap-2 py-2 px-4 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 disabled:from-sky-500/50 disabled:to-blue-600/50 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-blue-500/20 hover:shadow-blue-500/35 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
           >
             {generatingPdf ? (
               <>
@@ -398,12 +404,12 @@ export default function PublicEquipmentTimeline() {
         
         {/* Co-Branding Contact Banner */}
         <section className="bg-slate-900/60 border border-slate-800/80 p-6 rounded-2xl backdrop-blur-md flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-5">
-            <div className="bg-white p-0 rounded-2xl border border-slate-800/60 flex items-center justify-center shrink-0 w-60 h-28 relative overflow-hidden">
+          <div className="flex flex-col sm:flex-row items-center text-center sm:text-left gap-5">
+            <div className="bg-white p-1 rounded-2xl border border-slate-800/60 flex items-center justify-center shrink-0 w-44 h-20 relative overflow-hidden shadow-inner">
               <img 
                 src="/logo-emporio.png" 
                 alt="Empório do Ar" 
-                className="w-full h-full object-fill"
+                className="w-full h-full object-contain"
               />
             </div>
             <div>
@@ -412,22 +418,23 @@ export default function PublicEquipmentTimeline() {
             </div>
           </div>
           
-          <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+          <div className="bg-slate-950/60 border border-slate-800/80 p-4 rounded-2xl flex flex-col gap-2 w-full md:w-60 shadow-lg">
+            <div className="text-[9px] font-bold text-slate-500 text-center uppercase tracking-wider">Central de Atendimento</div>
             <a 
               href="tel:+556436511155" 
-              className="flex items-center justify-center gap-2 px-5 py-3 bg-slate-950 hover:bg-slate-850 border border-slate-800 text-slate-200 hover:text-white rounded-xl text-xs font-bold transition-all"
+              className="flex items-center justify-center gap-2 py-2 px-4 bg-slate-900 hover:bg-slate-850 border border-slate-800/80 rounded-xl text-xs font-bold text-slate-200 hover:text-white transition-all"
             >
-              <Phone size={14} className="text-blue-400" />
-              (64) 3651-1155
+              <Phone size={13} className="text-slate-400" />
+              +55 (64) 3651-1155
             </a>
             <a 
-              href="https://wa.me/5564984569784" 
+              href="https://wa.me/5564984505754" 
               target="_blank"
               rel="noreferrer"
-              className="flex items-center justify-center gap-2 px-5 py-3 bg-emerald-600/10 hover:bg-emerald-600/20 border border-emerald-500/20 text-emerald-400 hover:text-emerald-300 rounded-xl text-xs font-bold transition-all"
+              className="flex items-center justify-center gap-2 py-2 px-4 bg-slate-900 hover:bg-slate-850 border border-slate-800/80 rounded-xl text-xs font-bold text-emerald-450 hover:text-emerald-350 transition-all"
             >
-              <MessageSquare size={14} className="text-emerald-400" />
-              (64) 98456-9784
+              <MessageSquare size={13} className="text-emerald-450" />
+              +55 (64) 98450-5754
             </a>
           </div>
         </section>
@@ -441,33 +448,54 @@ export default function PublicEquipmentTimeline() {
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 text-xs">
             <div>
-              <span className="text-slate-500 block">Marca</span>
+              <span className="text-slate-500 flex items-center gap-1.5">
+                <Tag size={12} className="text-slate-600" />
+                Marca
+              </span>
               <p className="font-bold text-slate-200 mt-0.5">{eq.marca}</p>
             </div>
             <div>
-              <span className="text-slate-500 block">Modelo</span>
+              <span className="text-slate-500 flex items-center gap-1.5">
+                <Cpu size={12} className="text-slate-600" />
+                Modelo
+              </span>
               <p className="font-bold text-slate-200 mt-0.5">{eq.modelo}</p>
             </div>
             <div>
-              <span className="text-slate-500 block">N/ Série</span>
+              <span className="text-slate-500 flex items-center gap-1.5">
+                <Barcode size={12} className="text-slate-600" />
+                Nº Série
+              </span>
               <p className="font-bold text-slate-200 mt-0.5">{eq.numeroSerie}</p>
             </div>
             <div>
-              <span className="text-slate-500 block">Capacidade</span>
+              <span className="text-slate-500 flex items-center gap-1.5">
+                <Snowflake size={12} className="text-slate-600" />
+                Capacidade
+              </span>
               <p className="font-bold text-slate-200 mt-0.5">{eq.btu.toLocaleString()} BTUs</p>
             </div>
             <div>
-              <span className="text-slate-500 block">Tipo</span>
+              <span className="text-slate-500 flex items-center gap-1.5">
+                <Layers size={12} className="text-slate-600" />
+                Tipo
+              </span>
               <p className="font-bold text-slate-200 mt-0.5">{eq.tipo}</p>
             </div>
             <div>
-              <span className="text-slate-500 block">Data de Instalação</span>
+              <span className="text-slate-500 flex items-center gap-1.5">
+                <Calendar size={12} className="text-slate-600" />
+                Data de Instalação
+              </span>
               <p className="font-bold text-slate-200 mt-0.5">
                 {new Date(eq.dataInstalacao).toLocaleDateString('pt-BR')}
               </p>
             </div>
             <div>
-              <span className="text-slate-500 block">Estabelecimento</span>
+              <span className="text-slate-500 flex items-center gap-1.5">
+                <Building2 size={12} className="text-slate-600" />
+                Estabelecimento
+              </span>
               <p className="font-bold text-blue-400 mt-0.5">{eq.cliente?.nome || 'Sem Estabelecimento'}</p>
             </div>
             <div className="col-span-2">
@@ -535,8 +563,8 @@ export default function PublicEquipmentTimeline() {
               {eq.manutencoes.map((m) => (
                 <div key={m.id} className="relative pl-8 space-y-4">
                   {/* Timeline point */}
-                  <div className="absolute -left-[19px] top-1.5 w-4 h-4 rounded-full bg-slate-950 border border-emerald-500 flex items-center justify-center shadow-lg">
-                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-400"></div>
+                  <div className="absolute -left-[20px] top-1 w-[22px] h-[22px] rounded-full bg-emerald-500 border border-emerald-300 flex items-center justify-center shadow-[0_0_12px_rgba(16,185,129,0.5)]">
+                    <div className="w-2 h-2 rounded-full bg-white"></div>
                   </div>
 
                   {/* Header card */}
