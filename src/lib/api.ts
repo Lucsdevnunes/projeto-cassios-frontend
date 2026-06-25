@@ -1,4 +1,17 @@
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+const getBaseUrl = () => {
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    if (hostname === 'sistema.emporiodoar.com.br') {
+      return 'https://projeto-cassios-backend-production.up.railway.app/api';
+    }
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+    }
+  }
+  return process.env.NEXT_PUBLIC_API_URL || 'https://projeto-cassios-backend-production.up.railway.app/api';
+};
+
+const BASE_URL = getBaseUrl();
 
 class ApiClient {
   private static accessToken: string | null = null;
