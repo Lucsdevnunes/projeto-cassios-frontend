@@ -894,11 +894,11 @@ export default function EquipmentsPage() {
 
                         <p className="text-slate-400 leading-relaxed text-[11px]">{m.descricao}</p>
 
-                        {m.materiais && m.materiais.length > 0 ? (
+                        {(m.materiais && m.materiais.length > 0) || m.pecaTrocada ? (
                           <div className="mt-2 p-2.5 rounded-xl bg-slate-950/50 border border-slate-800/40 text-[11px]">
                             <div className="text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-1">Materiais Utilizados:</div>
                             <div className="divide-y divide-slate-800/40">
-                              {m.materiais.map((mat: any, mIdx: number) => (
+                              {m.materiais && m.materiais.map((mat: any, mIdx: number) => (
                                 <div key={mIdx} className="py-1 flex justify-between items-center text-slate-300">
                                   <div>
                                     <span className="font-semibold text-slate-200">{mat.material.nome}</span>
@@ -909,12 +909,17 @@ export default function EquipmentsPage() {
                                   </div>
                                 </div>
                               ))}
+                              {(!m.materiais || m.materiais.length === 0) && m.pecaTrocada && (
+                                <div className="py-1 flex justify-between items-center text-slate-300">
+                                  <div>
+                                    <span className="font-semibold text-slate-200">{m.pecaTrocada}</span>
+                                  </div>
+                                  <div className="font-bold text-blue-400">
+                                    {m.quantidade || 1} <span className="text-[9px] text-slate-500 font-normal">UN</span>
+                                  </div>
+                                </div>
+                              )}
                             </div>
-                          </div>
-                        ) : m.pecaTrocada ? (
-                          <div className="bg-slate-950/50 px-2.5 py-1 rounded-md border border-slate-800/40 text-[10px] inline-flex items-center gap-1.5">
-                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-                            Peça: <span className="text-slate-300 font-bold">{m.pecaTrocada} ({m.quantidade})</span>
                           </div>
                         ) : null}
 
