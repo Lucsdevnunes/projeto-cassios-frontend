@@ -332,6 +332,9 @@ export default function EquipmentsPage() {
     const files = e.target.files;
     if (!files) return;
 
+    // Reset input value to allow uploading the same file again
+    e.target.value = '';
+
     Array.from(files).forEach((file) => {
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -1261,16 +1264,28 @@ export default function EquipmentsPage() {
                       <Camera size={14} className="text-blue-400" />
                       FOTOS ANTES (Intervenção)
                     </label>
-                    <label className="py-1 px-2.5 bg-blue-600/10 hover:bg-blue-600 text-blue-400 hover:text-white rounded-lg text-[10px] font-bold transition-colors cursor-pointer flex items-center gap-1">
-                      <Plus size={10} /> Add
-                      <input 
-                        type="file" 
-                        multiple 
-                        accept="image/*" 
-                        onChange={(e) => handlePhotoUpload(e, 'BEFORE')} 
-                        className="hidden" 
-                      />
-                    </label>
+                    <div className="flex items-center gap-2">
+                      <label className="py-1 px-2 bg-blue-600/10 hover:bg-blue-600 text-blue-400 hover:text-white rounded-lg text-[10px] font-bold transition-colors cursor-pointer flex items-center gap-1">
+                        <Camera size={10} /> Câmera
+                        <input 
+                          type="file" 
+                          accept="image/*" 
+                          capture="environment"
+                          onChange={(e) => handlePhotoUpload(e, 'BEFORE')} 
+                          className="hidden" 
+                        />
+                      </label>
+                      <label className="py-1 px-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg text-[10px] font-bold transition-colors cursor-pointer flex items-center gap-1">
+                        <Plus size={10} /> Galeria
+                        <input 
+                          type="file" 
+                          multiple 
+                          accept="image/*" 
+                          onChange={(e) => handlePhotoUpload(e, 'BEFORE')} 
+                          className="hidden" 
+                        />
+                      </label>
+                    </div>
                   </div>
                   
                   {photosBefore.length === 0 ? (
@@ -1302,16 +1317,28 @@ export default function EquipmentsPage() {
                       <Camera size={14} className="text-emerald-400" />
                       FOTOS DEPOIS (Conclusão)
                     </label>
-                    <label className="py-1 px-2.5 bg-emerald-600/10 hover:bg-emerald-600 text-emerald-400 hover:text-white rounded-lg text-[10px] font-bold transition-colors cursor-pointer flex items-center gap-1">
-                      <Plus size={10} /> Add
-                      <input 
-                        type="file" 
-                        multiple 
-                        accept="image/*" 
-                        onChange={(e) => handlePhotoUpload(e, 'AFTER')} 
-                        className="hidden" 
-                      />
-                    </label>
+                    <div className="flex items-center gap-2">
+                      <label className="py-1 px-2 bg-emerald-600/10 hover:bg-emerald-600 text-emerald-400 hover:text-white rounded-lg text-[10px] font-bold transition-colors cursor-pointer flex items-center gap-1">
+                        <Camera size={10} /> Câmera
+                        <input 
+                          type="file" 
+                          accept="image/*" 
+                          capture="environment"
+                          onChange={(e) => handlePhotoUpload(e, 'AFTER')} 
+                          className="hidden" 
+                        />
+                      </label>
+                      <label className="py-1 px-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg text-[10px] font-bold transition-colors cursor-pointer flex items-center gap-1">
+                        <Plus size={10} /> Galeria
+                        <input 
+                          type="file" 
+                          multiple 
+                          accept="image/*" 
+                          onChange={(e) => handlePhotoUpload(e, 'AFTER')} 
+                          className="hidden" 
+                        />
+                      </label>
+                    </div>
                   </div>
                   
                   {photosAfter.length === 0 ? (
